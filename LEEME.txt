@@ -1,0 +1,38 @@
+TORTILLERÍA OBREGÓN — PAQUETE PROFESIONAL V2
+================================================
+
+Incluye una aplicación web adaptable a Android, con estilo azul, blanco y amarillo.
+
+FUNCIONES INCLUIDAS
+- Panel de administración y panel individual para repartidores.
+- Productos: alta, edición, activar/desactivar, precio, unidad, tipo de inventario y fotografía desde el teléfono.
+- Existencias de tienda y ajustes manuales de inventario.
+- Cargas de inventario a repartidores y devolución automática de sobrantes al cerrar ruta.
+- Ventas con varios productos en un ticket, descuento, forma de pago, cliente y nota.
+- Sonido al guardar una venta.
+- Historial de ventas y ticket imprimible desde el navegador.
+- Registro de devoluciones parciales de productos y ajuste de existencias.
+- Clientes, ventas a crédito, abonos e historial.
+- Balance por repartidor, reportes y lista de devoluciones.
+- Exportación y restauración de respaldo JSON.
+- Caché para uso sin conexión después de abrirla en línea al menos una vez.
+
+CÓMO PUBLICAR DESDE ANDROID
+1. Descomprime el ZIP en tu teléfono.
+2. Abre GitHub en Chrome e ingresa al repositorio TortilleriaObregon.
+3. Entra a Add file > Upload files.
+4. Sube index.html, app.js, manifest.json, sw.js y este archivo a la raíz del repositorio. Si pregunta si reemplazar archivos existentes, confirma.
+5. Pulsa Commit changes.
+6. En Settings > Pages, selecciona Deploy from a branch, rama main y carpeta /(root). Guarda.
+7. Abre la URL publicada con Chrome, espera a que cargue y elige el menú ⋮ > Añadir a pantalla de inicio.
+
+PRIMER USO
+- Acceso administrador de demostración: ADMIN123.
+- PIN de repartidor de demostración: 1234.
+- Cambia el PIN de administrador en Configuración y crea/ajusta los repartidores. Los datos de ejemplo se pueden editar.
+
+LIMITACIONES IMPORTANTES
+- Esta versión guarda los datos localmente en el navegador del dispositivo. Exporta respaldos con frecuencia y no borres los datos del sitio sin respaldarlos.
+- La información no se sincroniza entre varios teléfonos. Para que administrador y repartidores compartan datos en tiempo real se necesita un servidor con autenticación y permisos reales.
+- El PIN en esta aplicación local es una barrera de interfaz, no seguridad de servidor. No la uses como sistema contable o de seguridad auditado sin pruebas adicionales.
+- Para impresión Bluetooth, el teléfono puede requerir una impresora compatible y una app/servicio de impresión instalado. El botón de ticket usa la impresión del navegador.
