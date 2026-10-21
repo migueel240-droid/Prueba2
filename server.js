@@ -9,7 +9,7 @@ const Database = require('better-sqlite3');
 
 const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.json({limit:'1mb'}));
+app.use(express.json({limit:'8mb'}));
 app.use('/api/login', rateLimit({windowMs: 15*60*1000, max: 30, standardHeaders: true, legacyHeaders: false}));
 
 const dataDir = path.join(__dirname, 'data');
@@ -115,7 +115,23 @@ app.post('/api/sales',auth,(req,res)=>{
  const sum=items.reduce((s,x)=>s+Math.max(0,Number(x.qty)||0)*Math.max(0,Number(x.price)||0),0);
  if(!Number.isFinite(sum)||Math.abs(sum-Number(total))>0.02)return res.status(400).json({error:'El total no coincide.'});
  const save=db.transaction(()=>{
-  for(const x of items){const p=db.prepare('SELECT * FROM products WHERE id=? AND active=1').get(Number(x.product_id));if(!p)throw Error('Producto no disponible.');if(p.stock<Number(x.qty))throw Error('Existencia insuficiente: '+p.name);db.prepare('UPDATE products SET stock=stock-?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run(Number(x.qty),p.id);db.prepare("INSERT INTO movements(product_id,user_id,kind,quantity,note) VALUES(?,?,?,?,?)").run(p.id,req.user.id,'venta',-Number(x.qty),'Venta '+sid);}
+  for(const x of items){
+   const p=db.prepare('SELECT * FROM products WHERE id=? AND active=1').get(Number(x.product_id));
+   const qty=Number(x.qty);
+   if(!p||!Number.isFinite(qty)||qty<=0)throw Error('Producto o cantidad inválida.');
+   if(req.user.role==='admin'){
+    if(p.stock<qty)throw Error('Existencia insuficiente: '+p.name);
+    db.prepare('UPDATE products SET stock=stock-?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run(qty,p.id);
+   } else {
+    const assignments=db.prepare('SELECT items_json FROM assignments WHERE driver_id=?').all(req.user.id);
+    const sold=db.prepare('SELECT items_json FROM sales WHERE user_id=?').all(req.user.id);
+    const returned=db.prepare('SELECT items_json FROM returns WHERE driver_id=?').all(req.user.id);
+    const totalFor=(rows)=>rows.reduce((acc,row)=>acc+JSON.parse(row.items_json).filter(i=>Number(i.product_id)===p.id).reduce((n,i)=>n+Number(i.qty||0),0),0);
+    const available=totalFor(assignments)-totalFor(sold)-totalFor(returned);
+    if(available<qty)throw Error('No tienes suficiente inventario asignado de: '+p.name);
+   }
+   db.prepare("INSERT INTO movements(product_id,user_id,kind,quantity,note) VALUES(?,?,?,?,?)").run(p.id,req.user.id,'venta',-qty,'Venta '+sid);
+  }
   db.prepare('INSERT INTO sales(id,user_id,items_json,total,payment_method,amount_paid,note,created_at) VALUES(?,?,?,?,?,?,?,?)').run(sid,req.user.id,JSON.stringify(items),sum,String(payment_method),Number(amount_paid??sum),String(note),String(created_at));
  });try{save();}catch(e){return res.status(400).json({error:e.message});}
  res.json({ok:true,id:sid,total:sum});
