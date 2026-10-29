@@ -158,7 +158,52 @@ app.get('/api/reports',auth,(req,res)=>{
  const rows=db.prepare('SELECT date(created_at) day, COUNT(*) tickets, SUM(total) sales, SUM(amount_paid) paid FROM sales'+where+' GROUP BY date(created_at) ORDER BY day DESC LIMIT 90').all(...args);
  res.json({daily:rows});
 });
-app.use(express.static(path.join(__dirname,'public')));
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
-const port=Number(process.env.PORT)||3000;
-app.listen(port,()=>console.log(`Tortillería Obregón escuchando en puerto ${port}`));
+const publicDir = path.join(__dirname, 'public');
+const publicIndex = path.join(publicDir, 'index.html');
+const hasPublicFolder = fs.existsSync(publicIndex);
+const frontendDir = hasPublicFolder ? publicDir : __dirname;
+
+// Si existe public/, servir únicamente esa carpeta.
+if (hasPublicFolder) {
+  app.use(express.static(publicDir));
+} else {
+  // Si los archivos están en la raíz, permitir
+  // únicamente los archivos necesarios para la interfaz.
+  const rootAssets = new Set([
+    'app.js',
+    'styles.css',
+    'manifest.json',
+    'sw.js'
+  ]);
+
+  app.get('/:asset', (req, res, next) => {
+    const asset = req.params.asset;
+
+    if (!rootAssets.has(asset)) return next();
+
+    const filePath = path.join(__dirname, asset);
+
+    if (!fs.existsSync(filePath)) return next();
+
+    res.sendFile(filePath, err => {
+      if (err) next(err);
+    });
+  });
+}
+
+// Cargar la página principal.
+app.get('*', (req, res, next) => {
+  if (req.path === '/api' || req.path.startsWith('/api/')) {
+    return next();
+  }
+
+  const indexPath = path.join(frontendDir, 'index.html');
+
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send('No se encontró index.html.');
+  }
+
+  res.sendFile(indexPath, err => {
+    if (err) next(err);
+  });
+});
