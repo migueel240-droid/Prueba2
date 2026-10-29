@@ -207,3 +207,9 @@ app.get('*', (req, res, next) => {
     if (err) next(err);
   });
 });
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor iniciado en puerto ${PORT}`);
+});
